@@ -13,6 +13,75 @@
 import sys, math
 import numpy as np
 
+def read_hess_orca(hessfile, iso):
+   # The force constant matrix is read from ORCA hessian file
+   # The matrix values are mass-weighted according to the isotopic masses
+   # Vibrational scaling factors are not applied to matrix elements at this stage:
+   # the resulting frequencies can be scaled after diagonalization
+
+    mass_list = []
+    with open(hessfile, 'r') as hf:
+
+        # read hessian
+        while True:
+            line = hf.readline()
+            if "$hessian" in line:
+                break
+            elif line == "":
+                sys.stderr.write("Missing $hessian in '{}'".format(hf))
+                sys.exit(1)
+
+        d_o_f = int(hf.readline().strip())
+        hess_mat = np.ndarray(shape=(d_o_f, d_o_f))
+        mw_hess_mat = np.ndarray(shape=(d_o_f, d_o_f))
+
+        while True:
+            col_inds = list(map(int, hf.readline().split()))
+            for i in range(d_o_f):
+                row = hf.readline().split()
+                for c, j in enumerate(col_inds):
+                    val = float(row[c+1])
+                    hess_mat[i][j] = val
+
+            if col_inds[-1] == d_o_f - 1:
+                break
+
+
+        # read atom masses
+        while True:
+            line = hf.readline()
+            if "$atoms" in line:
+                break
+            elif line == "":
+                sys.stderr.write("Missing $atoms in '{}'".format(hf))
+                sys.exit(1)
+
+        natoms = int(hf.readline().strip())
+        for i in range(natoms):
+            m = float(hf.readline().split()[1])
+            mass_list.append(m)
+
+
+    # Isotopic substitution will consider 1H/2H, 12C/13C and 16O/17O. More can be
+    # added, but it hasn't been necessary so far...
+    isolist = iso.split()
+    for i in range(0,len(mass_list)):
+        for atom in isolist:
+            if i == int(atom)-1:
+                if mass_list[i] == 1.008: mass_list[i] = 2.0141 # protium - deuterium
+                if mass_list[i] == 12.011: mass_list[i] = 13.00335 # 12C - 13C
+                if mass_list[i] == 15.999: mass_list[i] = 16.9991 # 16O - 17O
+
+    for m in range (0, d_o_f):
+        for n in range(0, m+1):
+            sqrt_Mmn = (mass_list[m/3] * mass_list[n/3]) ** 0.5
+            mw_hess_mat[m,n] = ((hess_mat[m,n] / sqrt_Mmn))
+            mw_hess_mat[n,m] = ((hess_mat[n,n] / sqrt_Mmn))
+
+    return mw_hess_mat
+
+
+
 def read_hess(file, iso):
    # The force constant matrix is read from g09 ouptut
    # The matrix values are mass-weighted according to the isotopic masses

@@ -1,3 +1,26 @@
+# Readme
+
+This is a fork of the [Kinisot](https://github.com/bobbypaton/Kinisot) program originally developed by Robert Paton.
+
+It includes support for reading ORCA outputs/hessians.
+
+#### Notes
+- Tested against Example 1. See `kinisot/examples/orca/Cl_H_Cl/`.
+- Does not support automatic detection of level of theory and scaling factors.
+
+#### Usage
+
+```python
+Kinisot_orca.py reactant_output ts_output -iso "atom numbers" (-t temperature) (-s scalefactor)  
+```
+
+
+
+
+
+# Original Readme
+
+
 ![Kinisot Banner](kinisot_banner.png)
 
 [![DOI](https://zenodo.org/badge/16266/bobbypaton/Kinisot.svg)](https://zenodo.org/badge/latestdoi/16266/bobbypaton/Kinisot)
